@@ -25,7 +25,6 @@ class Hero(pygame.sprite.Sprite):
 
 class App:
     def __init__(self):
-        #self.player = None
         pygame.init()
         pygame.key.set_repeat(10, 50)  # удерживание кнопок влево и вправо
         self.width, self.height = 500, 780
@@ -34,10 +33,8 @@ class App:
         pygame.display.set_caption('Boundless Space')
         self.fps = 60
         self.all_sprites = pygame.sprite.Group()
-        self.tiles_group = pygame.sprite.Group()
         self.player_group = pygame.sprite.Group()
         self.hero = Hero(self, (180, 670))
-        #self.hero = None
         self.tile_width = self.tile_height = 50
 
     def terminate(self):
@@ -60,7 +57,7 @@ class App:
             image = image.convert_alpha()
         return image
 
-    def run_game(self):
+    def main(self):
         run = True
         while run:
             for event in pygame.event.get():
@@ -73,32 +70,40 @@ class App:
                         self.hero.update(-10, 0)
                     if key[pygame.K_RIGHT]:
                         self.hero.update(10, 0)
-            # update
 
-            # render
             self.screen.fill(pygame.Color('black'))
-            self.tiles_group.draw(self.screen)  # рисование всех спрайтов
-            self.player_group.draw(self.screen)
             self.all_sprites.draw(self.screen)
             pygame.display.flip()
             self.clock.tick(self.fps)
 
     def start_screen(self):
-        intro_text = ["", "", "", "", "", "", "", "", "                          Boundless Space", "", "",
-                      "           Press any button or click the mouse", "                          to start the game"]
+        intro_text = "               Boundless Space"
+        intro_txt = "           Press any button or click the mouse"
+        intro_t = "                          to start the game"
 
         fon = pygame.transform.scale(self.load_image('fon.jpg'), (self.width, self.height))
         self.screen.blit(fon, (0, 0))
+        font = pygame.font.Font(None, 45)
+
+        string_rendered = font.render(intro_text, 1, pygame.Color('white'))
+        intro_rect = string_rendered.get_rect()
+        intro_rect.top = 250
+        intro_rect.x = 10
+        self.screen.blit(string_rendered, intro_rect)
+
         font = pygame.font.Font(None, 30)
-        text_coord = 50
-        for line in intro_text:
-            string_rendered = font.render(line, 1, pygame.Color('white'))
-            intro_rect = string_rendered.get_rect()
-            text_coord += 10
-            intro_rect.top = text_coord
-            intro_rect.x = 10
-            text_coord += intro_rect.height
-            self.screen.blit(string_rendered, intro_rect)
+        string_rendered = font.render(intro_txt, 1, pygame.Color('white'))
+        intro_rect = string_rendered.get_rect()
+        intro_rect.top = 400
+        intro_rect.x = 10
+        self.screen.blit(string_rendered, intro_rect)
+
+        font = pygame.font.Font(None, 30)
+        string_rendered = font.render(intro_t, 1, pygame.Color('white'))
+        intro_rect = string_rendered.get_rect()
+        intro_rect.top = 430
+        intro_rect.x = 10
+        self.screen.blit(string_rendered, intro_rect)
 
         while True:
             for event in pygame.event.get():
@@ -115,4 +120,4 @@ class App:
 if __name__ == '__main__':
     app = App()
     app.start_screen()
-    app.run_game()
+    app.main()
