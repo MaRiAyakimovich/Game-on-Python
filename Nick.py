@@ -7,34 +7,32 @@ import random
 class Meteors(pygame.sprite.Sprite):
     def __init__(self, app):
         pygame.sprite.Sprite.__init__(self)
-        meteor = Meteors
         self.image = app.load_image("meteorite.png")
         self.rect = self.image.get_rect()
-        app.all_sprites.add(meteor)
         self.mask = pygame.mask.from_surface(self.image)
         self.rect.x = random.randrange(app.width - self.rect.width)
-        self.rect.y = 50
         self.speedy = 5
 
     def update(self, app):
         self.rect.y += self.speedy
-        self.rect.x = random.randrange(app.width - self.rect.width)
-        self.rect.y = 50
         self.speedy = 5
 
 
 class App:
     def __init__(self):
-        #self.player = None
         pygame.init()
-        pygame.key.set_repeat(200, 70)  # удерживание кнопок влево и вправо
-        self.size = self.width, self.height = 500, 780
+        pygame.key.set_repeat(10, 50)  # удерживание кнопок влево и вправо
+        self.width, self.height = 500, 780
         self.clock = pygame.time.Clock()
         self.screen = pygame.display.set_mode((self.width, self.height))
         pygame.display.set_caption('Boundless Space')
         self.fps = 60
         self.all_sprites = pygame.sprite.Group()
+        self.meteors_group = pygame.sprite.Group()
+        self.player_group = pygame.sprite.Group()
+        self.MYEVENTTYPE = 30
 
+        self.tile_width = self.tile_height = 50
 
     def terminate(self):
         pygame.quit()
@@ -57,23 +55,22 @@ class App:
         return image
 
     def main(self):
-        pygame.init()
-        screen = pygame.display.set_mode(self.size)
-        clock = pygame.time.Clock()
-        FPS = 60
-        meteor = pygame.sprite.Group()
-        running = True
-        while running:
+        pygame.time.set_timer(self.MYEVENTTYPE, 1000)
+
+        run = True
+        while run:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    running = False
-            screen.fill((0, 0, 0))
-            meteor.draw(screen)
-            meteor.update()
-            pygame.display.flip()
-            clock.tick(FPS)
-        pygame.quit()
+                    self.terminate()
+                if event.type == self.MYEVENTTYPE:
+                    self.meteors_group.add(Meteors(self))
 
+            self.screen.fill(pygame.Color('black'))
+            self.all_sprites.draw(self.screen)
+            self.meteors_group.draw(self.screen)
+            self.meteors_group.update(self)
+            pygame.display.flip()
+            self.clock.tick(self.fps)
 
 
 if __name__ == '__main__':
