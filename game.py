@@ -4,11 +4,27 @@ import sys
 import random
 
 
+class Bullet(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = app.load_image("bullet.png ")
+        self.rect = self.image.get_rect()
+        self.rect.bottom = y
+        self.rect.centerx = x
+        self.speedy = -10
+
+    def update(self):
+        self.rect.y += self.speedy
+        if self.rect.bottom < 0:
+            self.kill()
+
+
 class Hero(pygame.sprite.Sprite):
     def __init__(self, app, pos):
         super().__init__(app.all_sprites)
         self.image = app.load_image("spaceship.png")
         self.rect = self.image.get_rect()
+        self.radius = 55
         # вычисляем маску для эффективного сравнения
         self.mask = pygame.mask.from_surface(self.image)
         self.rect.x = pos[0]
@@ -22,6 +38,26 @@ class Hero(pygame.sprite.Sprite):
         if self.rect.left < 0:
             self.rect.left = 0
 
+    def shoot(self):
+        bullet = Bullet(self.rect.centerx, self.rect.top)
+        app.all_sprites.add(bullet)
+        app.bullets.add(bullet)
+
+
+class Meteors(pygame.sprite.Sprite):
+    def __init__(self, app):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = app.load_image("meteorite.png")
+        self.rect = self.image.get_rect()
+        self.radius = int(self.rect.width * .45 / 2)
+        self.mask = pygame.mask.from_surface(self.image)
+        self.rect.x = random.randrange(app.width - self.rect.width)
+        self.speedy = 5
+
+    def update(self, app):
+        self.rect.y += self.speedy
+        self.speedy = 5
+
 
 class App:
     def __init__(self):
@@ -33,8 +69,12 @@ class App:
         pygame.display.set_caption('Boundless Space')
         self.fps = 60
         self.all_sprites = pygame.sprite.Group()
+        self.meteors_group = pygame.sprite.Group()
         self.player_group = pygame.sprite.Group()
+        self.bullets = pygame.sprite.Group()
         self.hero = Hero(self, (180, 670))
+        self.MYEVENTTYPE = 30
+
         self.tile_width = self.tile_height = 50
 
     def terminate(self):
@@ -58,6 +98,8 @@ class App:
         return image
 
     def main(self):
+        pygame.time.set_timer(self.MYEVENTTYPE, 1000)
+
         run = True
         while run:
             for event in pygame.event.get():
@@ -70,40 +112,46 @@ class App:
                         self.hero.update(-10, 0)
                     if key[pygame.K_RIGHT]:
                         self.hero.update(10, 0)
+                    if event.key == pygame.K_SPACE:
+                        self.hero.shoot()
+
+                if event.type == self.MYEVENTTYPE:
+                    self.meteors_group.add(Meteors(self))
+
+            strike = pygame.sprite.groupcollide(app.meteors_group, app.bullets, True, True)
+            for blows in strike:
+                m = Meteors(self)
+                app.all_sprites.add(m)
+                app.meteors_group.add(m)
+
+            blows = pygame.sprite.spritecollide(self.hero, self.meteors_group, False, pygame.sprite.collide_circle)
+            if blows:
+                self.terminate()
 
             self.screen.fill(pygame.Color('black'))
             self.all_sprites.draw(self.screen)
+            self.meteors_group.draw(self.screen)
+            self.bullets.update()
+            self.meteors_group.update(self)
             pygame.display.flip()
             self.clock.tick(self.fps)
 
     def start_screen(self):
-        intro_text = "               Boundless Space"
-        intro_txt = "           Press any button or click the mouse"
-        intro_t = "                          to start the game"
+        intro_text = ["", "", "", "", "", "", "", "", "                          Boundless Space", "", "",
+                      "           Press any button or click the mouse", "                          to start the game"]
 
         fon = pygame.transform.scale(self.load_image('fon.jpg'), (self.width, self.height))
         self.screen.blit(fon, (0, 0))
-        font = pygame.font.Font(None, 45)
-
-        string_rendered = font.render(intro_text, 1, pygame.Color('white'))
-        intro_rect = string_rendered.get_rect()
-        intro_rect.top = 250
-        intro_rect.x = 10
-        self.screen.blit(string_rendered, intro_rect)
-
         font = pygame.font.Font(None, 30)
-        string_rendered = font.render(intro_txt, 1, pygame.Color('white'))
-        intro_rect = string_rendered.get_rect()
-        intro_rect.top = 400
-        intro_rect.x = 10
-        self.screen.blit(string_rendered, intro_rect)
-
-        font = pygame.font.Font(None, 30)
-        string_rendered = font.render(intro_t, 1, pygame.Color('white'))
-        intro_rect = string_rendered.get_rect()
-        intro_rect.top = 430
-        intro_rect.x = 10
-        self.screen.blit(string_rendered, intro_rect)
+        text_coord = 50
+        for line in intro_text:
+            string_rendered = font.render(line, 1, pygame.Color('white'))
+            intro_rect = string_rendered.get_rect()
+            text_coord += 10
+            intro_rect.top = text_coord
+            intro_rect.x = 10
+            text_coord += intro_rect.height
+            self.screen.blit(string_rendered, intro_rect)
 
         while True:
             for event in pygame.event.get():
