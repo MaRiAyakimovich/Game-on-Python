@@ -12,11 +12,13 @@ class Bullet(pygame.sprite.Sprite):
         self.rect.bottom = y
         self.rect.centerx = x
         self.speedy = -10
+        self.counting = 0
 
     def update(self):
         self.rect.y += self.speedy
         if self.rect.bottom < 0:
             self.kill()
+            self.counting += 1
 
 
 class Hero(pygame.sprite.Sprite):
@@ -64,6 +66,7 @@ class App:
         pygame.init()
         pygame.key.set_repeat(10, 50)  # удерживание кнопок влево и вправо
         self.width, self.height = 500, 780
+        self.life = 0
         self.clock = pygame.time.Clock()
         self.screen = pygame.display.set_mode((self.width, self.height))
         pygame.display.set_caption('Boundless Space')
@@ -74,7 +77,7 @@ class App:
         self.bullets = pygame.sprite.Group()
         self.hero = Hero(self, (180, 670))
         self.MYEVENTTYPE = 30
-
+        self.counting = 0
         self.tile_width = self.tile_height = 50
 
     def terminate(self):
@@ -96,6 +99,14 @@ class App:
         else:
             image = image.convert_alpha()
         return image
+
+    def count(self, screen, text, size, x, y):
+        font_name = pygame.font.match_font('arial')
+        font = pygame.font.Font(font_name, size)
+        text_surface = font.render(text, True, (255, 255, 255))
+        text_rect = text_surface.get_rect()
+        text_rect.midtop = (x, y)
+        self.screen.blit(text_surface, text_rect)
 
     def main(self):
         pygame.time.set_timer(self.MYEVENTTYPE, 1000)
@@ -126,7 +137,9 @@ class App:
 
             blows = pygame.sprite.spritecollide(self.hero, self.meteors_group, False, pygame.sprite.collide_circle)
             if blows:
-                self.terminate()
+                self.life += 1
+                if self.life == 3:
+                    self.terminate()
 
             self.screen.fill(pygame.Color('black'))
             self.all_sprites.draw(self.screen)
@@ -135,6 +148,10 @@ class App:
             self.meteors_group.update(self)
             pygame.display.flip()
             self.clock.tick(self.fps)
+
+            self.screen.fill(pygame.Color('black'))
+            self.all_sprites.draw(self.screen)
+            self.count(self.screen, str(self.counting), 18, self.width / 2, 10)
 
     def start_screen(self):
         intro_text = ["", "", "", "", "", "", "", "", "                          Boundless Space", "", "",
